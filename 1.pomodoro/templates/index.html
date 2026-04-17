@@ -56,6 +56,7 @@
     const WORK_MINUTES = 25;
     let totalSeconds = WORK_MINUTES * 60;
     let timerId = null;
+    let isFinished = false;
 
     const timerEl = document.getElementById("timer");
     const messageEl = document.getElementById("message");
@@ -76,25 +77,24 @@
         timerId = null;
         timerEl.textContent = "00:00";
         messageEl.textContent = "作業終了！お疲れ様でした！";
+        isFinished = true;
         startBtn.disabled = false;
         startBtn.textContent = "もう一度";
-        totalSeconds = WORK_MINUTES * 60;
       }
     }
 
     startBtn.addEventListener("click", function () {
       if (timerId !== null) return;
 
-      messageEl.textContent = "";
-      startBtn.disabled = true;
-
-      // Reset if we finished a session
-      if (startBtn.textContent === "もう一度") {
+      if (isFinished) {
         totalSeconds = WORK_MINUTES * 60;
         timerEl.textContent = formatTime(totalSeconds);
         startBtn.textContent = "開始";
+        isFinished = false;
       }
 
+      messageEl.textContent = "";
+      startBtn.disabled = true;
       timerId = setInterval(tick, 1000);
     });
   </script>
