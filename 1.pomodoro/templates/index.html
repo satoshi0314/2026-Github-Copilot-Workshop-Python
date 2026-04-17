@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ポモドーロタイマー</title>
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+        "Yu Gothic UI", "Segoe UI", sans-serif;
+      background: linear-gradient(145deg, #7b7fc4 0%, #9b7fd4 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ---- Window Card ---- */
+    .window {
+      background: #ffffff;
+      border-radius: 18px;
+      width: 380px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+    }
+
+    /* ---- Title Bar ---- */
+    .title-bar {
+      background: #fafafa;
+      padding: 13px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #efefef;
+    }
+
+    .title-bar-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .window-controls span {
+      font-size: 12px;
+      color: #bbb;
+      cursor: default;
+      user-select: none;
+    }
+
+    /* ---- Content ---- */
+    .content {
+      padding: 28px 28px 24px;
+    }
+
+    /* ---- Timer Section ---- */
+    .timer-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    .status-label {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 18px;
+      letter-spacing: 0.5px;
+    }
+
+    .progress-container {
+      position: relative;
+      width: 210px;
+      height: 210px;
+    }
+
+    .progress-svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .progress-track {
+      fill: none;
+      stroke: #e8e8f2;
+      stroke-width: 18;
+    }
+
+    .progress-fill {
+      fill: none;
+      stroke: #6b6edd;
+      stroke-width: 18;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.8s linear;
+    }
+
+    .timer-display {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      font-weight: 700;
+      color: #222;
+      letter-spacing: -1px;
+    }
+
+    /* ---- Buttons ---- */
+    .buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-bottom: 28px;
+    }
+
+    .btn {
+      padding: 12px 36px;
+      border-radius: 999px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+      outline: none;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: #6b6edd;
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 14px rgba(107, 110, 221, 0.4);
+    }
+
+    .btn-primary:hover {
+      background: #5a5dc8;
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: #6b6edd;
+      border: 2px solid #6b6edd;
+    }
+
+    .btn-secondary:hover {
+      background: #f0f0ff;
+    }
+
+    /* ---- Progress Section ---- */
+    .today-section {
+      background: #f5f5fa;
+      border-radius: 14px;
+      padding: 16px 20px;
+    }
+
+    .today-title {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 14px;
+    }
+
+    .today-stats {
+      display: flex;
+      gap: 36px;
+    }
+
+    .stat-value {
+      font-size: 30px;
+      font-weight: 700;
+      color: #333;
+      line-height: 1.1;
+    }
+
+    .stat-value.accent {
+      color: #6b6edd;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="window">
+    <!-- Title Bar -->
+    <div class="title-bar">
+      <span class="title-bar-title">ポモドーロタイマー</span>
+      <div class="window-controls">
+        <span>－</span>
+        <span>□</span>
+        <span>✕</span>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+      <!-- Timer -->
+      <div class="timer-section">
+        <div class="status-label" id="statusLabel">作業中</div>
+        <div class="progress-container">
+          <svg class="progress-svg" viewBox="0 0 220 220">
+            <circle class="progress-track" cx="110" cy="110" r="92" />
+            <circle class="progress-fill" id="progressFill" cx="110" cy="110" r="92" />
+          </svg>
+          <div class="timer-display" id="timerDisplay">25:00</div>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="buttons">
+        <button class="btn btn-primary" id="startBtn" onclick="toggleTimer()">開始</button>
+        <button class="btn btn-secondary" onclick="resetTimer()">リセット</button>
+      </div>
+
+      <!-- Today's Progress -->
+      <div class="today-section">
+        <div class="today-title">今日の進捗</div>
+        <div class="today-stats">
+          <div>
+            <div class="stat-value" id="completedCount">0</div>
+            <div class="stat-label">完了</div>
+          </div>
+          <div>
+            <div class="stat-value accent" id="focusTime">0分</div>
+            <div class="stat-label">集中時間</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WORK_SECONDS = 25 * 60;
+    const RADIUS = 92;
+    const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+    const TIMER_UPDATE_INTERVAL_MS = 500;
+
+    let timeLeft = WORK_SECONDS;
+    let isRunning = false;
+    let timerIntervalId = null;
+    let completedSessions = 0;
+    let totalFocusSeconds = 0;
+    let startTimestamp = null;
+    let startTimeLeft = WORK_SECONDS;
+    let startFocusSeconds = 0;
+
+    const progressFill = document.getElementById("progressFill");
+    progressFill.style.strokeDasharray = CIRCUMFERENCE;
+    progressFill.style.strokeDashoffset = 0;
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+
+    function updateProgressBar() {
+      const ratio = timeLeft / WORK_SECONDS;
+      progressFill.style.strokeDashoffset = CIRCUMFERENCE * (1 - ratio);
+    }
+
+    function updateFocusTime() {
+      const h = Math.floor(totalFocusSeconds / 3600);
+      const m = Math.floor((totalFocusSeconds % 3600) / 60);
+      document.getElementById("focusTime").textContent =
+        h > 0 ? `${h}時間${m}分` : `${m}分`;
+    }
+
+    function renderDisplay() {
+      document.getElementById("timerDisplay").textContent = formatTime(timeLeft);
+      updateProgressBar();
+    }
+
+    function toggleTimer() {
+      if (isRunning) {
+        clearInterval(timerIntervalId);
+        isRunning = false;
+        // Save elapsed time so we can resume accurately
+        const elapsed = Math.floor((Date.now() - startTimestamp) / 1000);
+        timeLeft = Math.max(0, startTimeLeft - elapsed);
+        totalFocusSeconds = startFocusSeconds + Math.min(elapsed, startTimeLeft);
+        document.getElementById("startBtn").textContent = "開始";
+        document.getElementById("statusLabel").textContent = "一時停止中";
+      } else {
+        isRunning = true;
+        startTimestamp = Date.now();
+        startTimeLeft = timeLeft;
+        startFocusSeconds = totalFocusSeconds;
+        document.getElementById("startBtn").textContent = "一時停止";
+        document.getElementById("statusLabel").textContent = "作業中";
+        timerIntervalId = setInterval(() => {
+          const elapsed = Math.floor((Date.now() - startTimestamp) / 1000);
+          timeLeft = Math.max(0, startTimeLeft - elapsed);
+          totalFocusSeconds = startFocusSeconds + Math.min(elapsed, startTimeLeft);
+          renderDisplay();
+          updateFocusTime();
+          if (timeLeft <= 0) {
+            clearInterval(timerIntervalId);
+            isRunning = false;
+            completedSessions++;
+            document.getElementById("completedCount").textContent = completedSessions;
+            document.getElementById("startBtn").textContent = "開始";
+            document.getElementById("statusLabel").textContent = "完了！";
+            timeLeft = WORK_SECONDS;
+            renderDisplay();
+          }
+        }, TIMER_UPDATE_INTERVAL_MS);
+      }
+    }
+
+    function resetTimer() {
+      clearInterval(timerIntervalId);
+      isRunning = false;
+      timeLeft = WORK_SECONDS;
+      startTimeLeft = WORK_SECONDS;
+      startTimestamp = null;
+      document.getElementById("startBtn").textContent = "開始";
+      document.getElementById("statusLabel").textContent = "作業中";
+      renderDisplay();
+    }
+
+    // Initial render
+    renderDisplay();
+  </script>
+</body>
+</html>
