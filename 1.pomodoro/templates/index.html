@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ポモドーロタイマー</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    #timer {
+      font-size: 5rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+      font-variant-numeric: tabular-nums;
+    }
+    #message {
+      font-size: 1.5rem;
+      color: #e53e3e;
+      min-height: 2rem;
+      margin-bottom: 1rem;
+    }
+    button {
+      font-size: 1.2rem;
+      padding: 0.6rem 2rem;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      background-color: #e53e3e;
+      color: white;
+    }
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>ポモドーロタイマー</h1>
+  <div id="timer">25:00</div>
+  <div id="message"></div>
+  <button id="startBtn">開始</button>
+
+  <script>
+    const WORK_MINUTES = 25;
+    let totalSeconds = WORK_MINUTES * 60;
+    let timerId = null;
+
+    const timerEl = document.getElementById("timer");
+    const messageEl = document.getElementById("message");
+    const startBtn = document.getElementById("startBtn");
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    }
+
+    function tick() {
+      totalSeconds--;
+      timerEl.textContent = formatTime(totalSeconds);
+
+      if (totalSeconds <= 0) {
+        clearInterval(timerId);
+        timerId = null;
+        timerEl.textContent = "00:00";
+        messageEl.textContent = "作業終了！お疲れ様でした！";
+        startBtn.disabled = false;
+        startBtn.textContent = "もう一度";
+        totalSeconds = WORK_MINUTES * 60;
+      }
+    }
+
+    startBtn.addEventListener("click", function () {
+      if (timerId !== null) return;
+
+      messageEl.textContent = "";
+      startBtn.disabled = true;
+
+      // Reset if we finished a session
+      if (startBtn.textContent === "もう一度") {
+        totalSeconds = WORK_MINUTES * 60;
+        timerEl.textContent = formatTime(totalSeconds);
+        startBtn.textContent = "開始";
+      }
+
+      timerId = setInterval(tick, 1000);
+    });
+  </script>
+</body>
+</html>
